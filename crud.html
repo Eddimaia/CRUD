@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CRUD</title>
+    <link href="minimal-table.css" rel="stylesheet" type="text/css" />
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CRUD</h1>
+
+    <table>
+      <thead>
+        <th id="conc">Concessionaria</th>
+        <th id="rod">Rodovia</th>
+        <th id="sent">Sentido</th>
+        <th id="pista">Tipo de Pista</th>
+        <th id="faixa">Número de faixas</th>
+        <th id="km inicial">Km Inicial</th>
+        <th id="km final">Km Final</th>
+      </thead>
+      <tbody id="obj"></tbody>
+    </table>
+    <script src="dados.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
