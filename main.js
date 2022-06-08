@@ -1,128 +1,98 @@
-//FUNÇÃO DE INÍCIO
-function incioCrud(){
-  
-  montarTabela(_DADOS.pistas_principal)
+//FUÇÃO DE INÍCIO
+function inicioCrud() {
+  const arrDadosPista = _DADOS.pistas_principal
 
+  montarTabela(arrDadosPista)
 
-  document.getElementById('selectConcessionaria').addEventListener('change', function (){
+  montarSelectConcessionaria(arrDadosPista)
 
-    filterSelect('rodovia_uf','selectRodovia')
-    filterSelect('sentido','selectSentido')
-
+  $('#selectConcessionaria').on('change', function(e){
+    if(e.currentTarget.value !== "---"){
+      $( "#selectRodovia" ).prop( "disabled", false )
+      $( "#selectSentido" ).prop( "disabled", false )
+    }else{
+      $( "#selectRodovia" ).prop( "disabled", true )
+      $( "#selectSentido" ).prop( "disabled", true )
+    }
   })
 
-  montarSelects('concessionaria','selectConcessionaria')
+  $("#selectConcessionaria").on('change', function(e){
 
-  document.querySelector('button').addEventListener('click',pesquisaSelect)
+    montarSelects(e,'rodovia_uf',arrDadosPista,'#selectRodovia')
 
-  document.getElementById('selectRodovia').setAttribute('disabled', '')
-  document.getElementById('selectSentido').setAttribute('disabled', '')
+    montarSelects(e,'sentido',arrDadosPista,'#selectSentido')
+  })
 
-  document.getElementById('selectConcessionaria').addEventListener('change',disabledSelect)
+  $('button').on('click', pesquisaSelect)
+
+  $('th').on('click', function(e){
+    let arrFiltrado = filtrarPesquisa()
+    let coluna = $(e.currentTarget).attr('coluna')
+    let ordem = $(e.currentTarget).attr('ordenamento')
+
+    if (ordem === 'decrescente') {
+      $(e.currentTarget).attr('ordenamento','crescente')
+      arrFiltrado = arrFiltrado.sort((a,b) => a[coluna] > b[coluna] ? 1 : -1)
+    }else{
+      $(e.currentTarget).attr('ordenamento','decrescente')
+      arrFiltrado = arrFiltrado.sort((a,b) => a[coluna] < b[coluna] ? 1 : -1)
+    }
+    montarTabela(arrFiltrado)
+  })
+
 }
 
-//READ
 function montarTabela(arrDadosPista) {
-  let accDadosTabela = ''
 
-  arrDadosPista.forEach(a => accDadosTabela += 
+  $('#tBodyRodovia').html(arrDadosPista.map(x => 
+`<tr>
+  <td>${x.concessionaria}</td>
+  <td>${x.rodovia_uf}</td>
+  <td>${x.sentido}</td>
+  <td>${x.subtipo_de_pista}</td>
+  <td>${x.numero_de_faixas}</td>
+  <td>${x.km_m_inicial}</td>
+  <td>${x.km_m_final}</td>
+  <td class = "btn-acao">
+    <button class="btn btn-sm btn-info"><i class="fa fa-edit"></i></button>
+    <button class="btn btn-sm btn-danger"><i class="fa fa-times"></i></button>
+  </td>
+</tr>`).join(""))
 
-    `<tr>
-      <td>${a.concessionaria}</td>
-      <td>${a.rodovia_uf}</td>
-      <td>${a.sentido}</td>
-      <td>${a.subtipo_de_pista}</td>
-      <td>${a.numero_de_faixas}</td>
-      <td>${a.km_m_inicial}</td>
-      <td>${a.km_m_final}</td>
-    </tr>`
-
-    )
-
-  document.getElementById('tBodyRodovia').innerHTML = accDadosTabela
 }
 
-//FUNÇÃO CONSTRUTORA DOS SELECT
-function montarSelects(propriedade, ID) {
+function montarSelectConcessionaria(arrDadosPista) {
 
-  const arrDadosPista = _DADOS.pistas_principal
-  let txtSelect = ''
-  let accDado = []
-  
-  for (let i = 0; i < arrDadosPista.length; i++) {
-    
-    if (accDado.includes(arrDadosPista[i][propriedade]) === false){
-  
-      accDado.push(arrDadosPista[i][propriedade])
-  
-      txtSelect += `<option values="${accDado[accDado.length -1]}">${accDado[accDado.length -1]}</option>`
-    } 
-  }
-  document.getElementById(ID).innerHTML = "<option selected>---</option>" + txtSelect
+  $('#selectConcessionaria').html("<option selected>---</option>" + [...new Set(arrDadosPista.map(x => x.concessionaria))].map(function(x){
+      return`<option values="${x}">${x}</option>`
+     }).join(""))
+
 }
 
-//FUNÇÃO FILTRO PARA MONTAR OS SELECTS DE RODOVIA E SENTIDO BASEADO NO INPUT DO SELECT DE CONCESSIONARIA
-function filterSelect(propriedade, ID) {
-
-  const arrDadosPista = _DADOS.pistas_principal
-  const selectConcessionariaValor = document.getElementById('selectConcessionaria').value
-  let txtSelect = ''
-  let accDado = []
-
-  for (let i = 0; i < arrDadosPista.length; i++) {
-    
-    if (accDado.includes(arrDadosPista[i][propriedade]) === false && selectConcessionariaValor === arrDadosPista[i].concessionaria){
+function montarSelects(e, propriedade, arrDadosPista,id){
   
-      accDado.push(arrDadosPista[i][propriedade])
-  
-      txtSelect += `<option values="${accDado[accDado.length -1]}">${accDado[accDado.length -1]}</option>`
-    } 
-  }
-  document.getElementById(ID).innerHTML = "<option selected>---</option>" + txtSelect
+  let arr = arrDadosPista.filter( x => x.concessionaria === e.currentTarget.value)
+
+  $(id).html("<option selected>---</option>" + [... new Set(arr.map(x => `<option values="${x[propriedade]}">${x[propriedade]}</option>` ))].join(" "))
+
 }
 
-//FUNÇÃO QUE SERÁ CHAMADA NO CLICK DO BOTÃO PARA IMPRIMIR OS ITENS SELECIONADOS NA TELA
-function pesquisaSelect() {
-  
-  let selectValorConcessionaria = document.getElementById('selectConcessionaria').value
-  let selectValorRodovia = document.getElementById('selectRodovia').value
-  let selectValorSentido = document.getElementById('selectSentido').value
-  
-  document.getElementById('tBodyRodovia').innerHTML = _DADOS.pistas_principal
+function filtrarPesquisa(){
+  let selectValorConcessionaria = $('#selectConcessionaria').val()
+  let selectValorRodovia = $('#selectRodovia').val()
+  let selectValorSentido = $('#selectSentido').val()
+
+  return _DADOS.pistas_principal
   .filter( x => 
     ( selectValorConcessionaria === '---' || x.concessionaria === selectValorConcessionaria )
     && ( selectValorRodovia === '---' || x.rodovia_uf === selectValorRodovia )
     && ( selectValorSentido === '---' || x.sentido === selectValorSentido ))
-    .map(x => 
-      `<tr>
-        <td>${x.concessionaria}</td>
-        <td>${x.rodovia_uf}</td>
-        <td>${x.sentido}</td>
-        <td>${x.subtipo_de_pista}</td>
-        <td>${x.numero_de_faixas}</td>
-        <td>${x.km_m_inicial}</td>
-        <td>${x.km_m_final}</td>
-      </tr>` )
-      .join("")
-  
-
 }
 
-//FUNÇÃO QUE DESABILITA OU HABILITA OS SELECTS DE RODOVIA E SENTIDO BASEADO NO INPUT DO SELECT DE CONCESSIONÁRIA
-function disabledSelect() {
-
-  if (document.getElementById('selectConcessionaria').value === '---') {
-
-    document.getElementById('selectRodovia').setAttribute('disabled', '')
-    document.getElementById('selectSentido').setAttribute('disabled', '')
-    
-  } else {
-
-    document.getElementById('selectRodovia').removeAttribute('disabled', '')
-    document.getElementById('selectSentido').removeAttribute('disabled', '')
+function pesquisaSelect() {
   
-} 
-  
-}
+  montarTabela(filtrarPesquisa())
+ 
+ }
 
-incioCrud()
+inicioCrud()
